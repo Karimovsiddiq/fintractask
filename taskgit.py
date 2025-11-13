@@ -76,4 +76,3 @@ class ExelInvoiceGenerator(InvoiceGenerator):
 
         ws[f'A{row}'] = "TOTAL"
 
-print('Something...')
