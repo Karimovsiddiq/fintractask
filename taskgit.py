@@ -76,3 +76,6 @@ class ExelInvoiceGenerator(InvoiceGenerator):
 
         ws[f'A{row}'] = "TOTAL"
 
+        ws[f'B{row}'] = self.calculate_total()
+
+
