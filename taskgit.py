@@ -74,8 +74,115 @@ class ExelInvoiceGenerator(InvoiceGenerator):
             row += 1
 
 
-        ws[f'A{row}'] = "TOTAL"
+        ws[f'A{row + 1}'] = "TOTAL"
+        ws[f'B{row + 1}'] = self.calculate_total()
+        ws[f'A{row + 1}'].font = openpyxl.styles.Font(bold= True)
+        ws[f'B{row + 1}'].font = openpyxl.styles.Font(bold= True)
 
-        ws[f'B{row}'] = self.calculate_total()
+
+        ws[f'A{row + 3}'] = f"Created: {self.date}"
+        wb.save(filename)
+        return filename
+    
+class HTMLInvoiceGenerator(InvoiceGenerator):
+    def generate_invoice(self):
+        filename = f"invoice_{self.client_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.html"
+        
+        
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice - {self.client_name}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; }}
+        h1 {{ color: #333; }}
+        table {{ border-collapse: collapse; width: 100%; margin-top: 20px; }}
+        th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
+        th {{ background-color: #4CAF50; color: white; }}
+        .total {{ font-weight: bold; font-size: 18px; }}
+    </style>
+</head>
+<body>
+    <h1>INVOICE</h1>
+    <p><strong>Client:</strong> {self.client_name}</p>
+    <p><strong>Date:</strong> {self.date}</p>
+    
+    <table>
+        <tr>
+            <th>Product Name</th>
+            <th>Price</th>
+        </tr>
+"""
+        
+       
+        for item in self.items:
+            html_content += f"""
+        <tr>
+            <td>{item['name']}</td>
+            <td>${item['price']}</td>
+        </tr>
+"""
+        
+      
+        html_content += f"""
+        <tr class="total">
+            <td>TOTAL:</td>
+            <td>${self.calculate_total()}</td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+        
+       
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        return filename
+    
+class InvoiceManager:
+    def __init__(self, generator):
+        self.generator = generator
+
+    def create_invoice(self):
+        filename = self.generator.generate_invoice()
+        print(f"Invoice successfully generated: {filename}")
+        return filename
+    
+if __name__ == "__main__":
+    print("="*60)
+    print("FINTRACK CO. -INVOICE GENERATOR")
+    print("="*60)
+
+    client = "Siddiq Karimov"
+    items = [
+        {"name": "Laptop", "price": 1000},
+        {"name": "Mouse", "price": 50},
+        {"name": "Keyboard", "price": 80}
+    ]
+
+    print(f"\nClient: {client}")
+    print(f"Items: {len(items)} products")
+    print(f"Total: ${sum(item['price'] for item in items)}")
+    print("\nGenerating invoices...\n")
 
 
+    pdf_gen = PDFInvoiceGenerator(client, items)
+    pdf_manager = InvoiceManager(pdf_gen)
+    pdf_manager.create_invoice()
+
+
+    excel_gen = ExelInvoiceGenerator(client, items)
+    excel_manager = InvoiceManager(excel_gen)
+    excel_manager.create_invoice()
+
+
+    html_gen = HTMLInvoiceGenerator(client, items)
+    html_manager = InvoiceManager(html_gen)
+    html_manager.create_invoice()
+
+
+    print("\n" + "="*60)
+    print("All invoices generated successfully")
+    print("="*60)
